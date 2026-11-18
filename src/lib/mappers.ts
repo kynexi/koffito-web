@@ -65,9 +65,13 @@ export type ApiMyEvent = {
 export type ApiOpenEvent = {
   id: string;
   event_at: string;
+  reveal_at: string;
+  blind: boolean;
   max_participants: number;
   spots_left: number;
   joined: boolean;
+  /** Only for non-blind coffee talks. */
+  cafe: ApiVenue | null;
 };
 
 // --- gender: API enum ↔ the labels the app shows ------------------------------------------------
@@ -168,15 +172,16 @@ export function eventFromMine(event: ApiMyEvent): CoffeeEvent {
 export function eventFromOpen(event: ApiOpenEvent): CoffeeEvent {
   return {
     id: event.id,
-    cafe: HIDDEN_CAFE,
+    cafe: event.cafe ? cafeFromApi(event.cafe) : HIDDEN_CAFE,
     date: new Date(event.event_at),
-    revealAt: new Date(new Date(event.event_at).getTime() - 24 * 60 * 60 * 1000),
+    revealAt: new Date(event.reveal_at),
     participants: [],
     maxParticipants: event.max_participants,
     spotsLeft: event.spots_left,
     status: "pending",
     joined: event.joined,
-    locationHidden: true,
-    revealOpened: false,
+    locationHidden: event.blind,
+    // A blind café stays closed for people who haven't joined, even after the reveal time.
+    revealOpened: !event.blind,
   };
 }

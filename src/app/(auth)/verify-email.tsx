@@ -31,6 +31,9 @@ export default function VerifyEmailPage() {
   if (state === "working") {
     return (
       <Screen contentClassName="flex-1 items-center justify-center gap-4">
+        <span role="status" className="sr-only">
+          Confirming your email…
+        </span>
         <Skeleton shape="circle" width={80} />
         <Skeleton width={220} height={28} />
       </Screen>

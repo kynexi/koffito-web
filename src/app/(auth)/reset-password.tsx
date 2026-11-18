@@ -40,6 +40,19 @@ export default function ResetPasswordPage() {
     }
   };
 
+  if (!token) {
+    return (
+      <Screen contentClassName="flex-1 justify-center gap-8">
+        <AuthHero
+          emoji="🫗"
+          title="This link didn't work"
+          subtitle="Open the link from your email again, or ask for a new one."
+        />
+        <Button title="Get a new link" size="lg" fullWidth onClick={() => router.replace("/forgot-password")} />
+      </Screen>
+    );
+  }
+
   return (
     <Screen contentClassName="gap-8 pt-12">
       <AuthHero emoji="🔐" title="Choose a new password" subtitle="Make it something you haven't used here before." />

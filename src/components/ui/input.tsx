@@ -69,6 +69,8 @@ export function Input({
     },
     className: "flex-1 py-3 font-body text-base leading-6 text-foreground caret-primary",
     spellCheck: type === "email" || type === "url" || secureTextEntry ? false : undefined,
+    // Forms and password managers need a name; the autocomplete hint is a sensible default.
+    name: rest.name ?? (typeof rest.autoComplete === "string" ? rest.autoComplete : undefined),
     ...rest,
   };
 

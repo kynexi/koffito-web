@@ -124,6 +124,8 @@ export default function FindCoffeeTalkPage() {
             ) : (
               visibleEvents.map((event, index) => {
                 const joined = event.joined;
+                // Blind coffee talks keep the café secret; the others show it straight away.
+                const hidden = event.locationHidden ?? true;
 
                 return (
                   <Card
@@ -135,9 +137,10 @@ export default function FindCoffeeTalkPage() {
                       <div className="h-32 overflow-hidden rounded-2xl">
                         <img className="object-cover"
                           src={event.cafe.photo}
-                          alt="Blurred photo of the mystery café"
-                          style={{ width: "100%", height: "100%", filter: "blur(25px)" }}
+                          alt={hidden ? "Blurred photo of the mystery café" : `Photo of ${event.cafe.name}`}
+                          style={{ width: "100%", height: "100%", filter: hidden ? "blur(25px)" : undefined }}
                         />
+                        {hidden && (
                         <div className="absolute inset-0 items-center justify-center bg-black/20">
                           <div className="flex-row items-center gap-1.5 rounded-full bg-surface/90 px-3 py-1.5">
                             <Icon
@@ -148,6 +151,7 @@ export default function FindCoffeeTalkPage() {
                             <Text variant="caption">Revealed 24h before</Text>
                           </div>
                         </div>
+                        )}
                       </div>
 
                       <div className="flex-row items-center justify-between gap-3">
@@ -159,7 +163,7 @@ export default function FindCoffeeTalkPage() {
                         <div className="items-end gap-0.5">
                           <Text variant="label">{formatTime(event.date)}</Text>
                           <Text variant="caption" tone="muted">
-                            Location locked
+                            {hidden ? "Location locked" : event.cafe.name}
                           </Text>
                         </div>
                       </div>
