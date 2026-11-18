@@ -6,16 +6,26 @@ import {
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/settings-section";
-import { Header, Modal, Text } from "@/components/ui";
+import { Header, Modal, Text, useToast } from "@/components/ui";
 import { useSession } from "@/context/session";
 import { goBack } from "@/lib/navigation";
 
 export default function SettingsPage() {
-  const { signOut } = useSession();
+  const { signOut, me, updateSettings, isAdmin } = useSession();
+  const toast = useToast();
 
-  const [notifications, setNotifications] = useState(true);
-  const [reminders, setReminders] = useState(true);
+  // Shown immediately, saved in the background; flips back if the save fails.
+  const [notifications, setNotifications] = useState(me?.settings.notificationsEnabled ?? true);
+  const [reminders, setReminders] = useState(me?.settings.remindersEnabled ?? true);
   const [signOutOpen, setSignOutOpen] = useState(false);
+
+  const saveToggle = (key: "notifications" | "reminders", set: (value: boolean) => void) => (value: boolean) => {
+    set(value);
+    updateSettings({ [key]: value }).catch((error: Error) => {
+      set(!value);
+      toast.show({ title: "Could not save", message: error.message, variant: "error" });
+    });
+  };
 
   return (
     <Screen header={<Header title="Settings" onBack={goBack} />}>
@@ -34,6 +44,12 @@ export default function SettingsPage() {
             router.push({ pathname: "/survey", params: { mode: "interests" } })
           }
         />
+        <SettingsRow
+          icon="lock-closed-outline"
+          label="Change password"
+          description="Signs you out on other devices"
+          onClick={() => router.push("/change-password")}
+        />
       </SettingsSection>
 
       <SettingsSection title="Preferences">
@@ -41,15 +57,32 @@ export default function SettingsPage() {
           icon="notifications-outline"
           label="Notifications"
           description="Opportunities, event updates and more"
-          toggle={{ value: notifications, onChange: setNotifications }}
+          toggle={{ value: notifications, onChange: saveToggle("notifications", setNotifications) }}
         />
         <SettingsRow
           icon="alarm-outline"
           label="Coffee talk reminders"
           description="A nudge before each meetup"
-          toggle={{ value: reminders, onChange: setReminders }}
+          toggle={{ value: reminders, onChange: saveToggle("reminders", setReminders) }}
         />
       </SettingsSection>
+
+      {isAdmin && (
+        <SettingsSection title="Admin">
+          <SettingsRow
+            icon="calendar-outline"
+            label="Schedule a coffee talk"
+            description="Pick a café and a time"
+            onClick={() => router.push("/create-event")}
+          />
+          <SettingsRow
+            icon="flag-outline"
+            label="Reports"
+            description="Review what people reported"
+            onClick={() => router.push("/admin")}
+          />
+        </SettingsSection>
+      )}
 
       <SettingsSection title="Support">
         <SettingsRow
@@ -81,7 +114,7 @@ export default function SettingsPage() {
         primaryAction={{
           title: "Log out",
           variant: "destructive",
-          onClick: signOut,
+          onClick: () => void signOut(),
         }}
         secondaryAction={{
           title: "Stay",

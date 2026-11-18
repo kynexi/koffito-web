@@ -62,13 +62,7 @@ export default function RegisterPage() {
       }
 
       if (needsEmailConfirmation) {
-        toast.show({
-          title: "Check your inbox",
-          message: "Confirm your email, then log in to continue.",
-          variant: "success",
-          duration: 5000,
-        });
-        router.replace("/login");
+        router.replace({ pathname: "/check-email", params: { email: form.email.trim() } });
       }
     } finally {
       setLoading(false);

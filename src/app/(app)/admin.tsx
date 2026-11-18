@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ReportCard, reportStatusConfig } from "@/components/admin/report-card";
 import { Screen } from "@/components/layout";
 import { Badge, BottomSheet, Button, Chip, EmptyState, Header, Text, useToast } from "@/components/ui";
-import { reports as initialReports } from "@/data/reports";
+import { reportReasons } from "@/data/reports";
+import { useAction } from "@/hooks/use-action";
+import { api } from "@/lib/api";
 import { formatDate } from "@/lib/date";
 import { goBack } from "@/lib/navigation";
 import type { Report, ReportStatus } from "@/types/koffito";
@@ -17,10 +19,37 @@ const filters: { key: Filter; label: string }[] = [
   { key: "resolved", label: "Resolved" },
 ];
 
+type ApiReport = {
+  id: string;
+  reason: string;
+  details: string;
+  status: ReportStatus;
+  created_at: string;
+  reported_by: string;
+};
+
+const reportFromApi = (report: ApiReport): Report => ({
+  id: report.id,
+  reason: reportReasons.find((item) => item.key === report.reason)?.label ?? report.reason,
+  details: report.details,
+  reportedBy: report.reported_by,
+  date: new Date(report.created_at),
+  status: report.status,
+});
+
 export default function AdminPage() {
   const toast = useToast();
+  const run = useAction();
 
-  const [reports, setReports] = useState(initialReports);
+  const [reports, setReports] = useState<Report[]>([]);
+  const load = useCallback(async () => {
+    const page = await api<{ items: ApiReport[] }>("/admin/reports?limit=100");
+    setReports(page.items.map(reportFromApi));
+  }, []);
+
+  useEffect(() => {
+    void run(load, "Could not load reports");
+  }, [load, run]);
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -28,10 +57,15 @@ export default function AdminPage() {
   const selected = reports.find((report) => report.id === selectedId);
   const openCount = reports.filter((report) => report.status === "open").length;
 
-  const setStatus = (report: Report, status: ReportStatus) => {
-    setReports((current) => current.map((item) => (item.id === report.id ? { ...item, status } : item)));
+  const setStatus = async (report: Report, status: ReportStatus) => {
     setSelectedId(null);
-    toast.show({ title: `Report #${report.id} marked as ${reportStatusConfig[status].label.toLowerCase()}`, variant: "success" });
+    const ok = await run(
+      () => api(`/admin/reports/${report.id}`, { method: "PATCH", body: { status } }),
+      "Could not update the report",
+    );
+    if (!ok) return;
+    setReports((current) => current.map((item) => (item.id === report.id ? { ...item, status } : item)));
+    toast.show({ title: `Report #${report.id.slice(0, 6).toUpperCase()} marked as ${reportStatusConfig[status].label.toLowerCase()}`, variant: "success" });
   };
 
   return (
@@ -52,7 +86,7 @@ export default function AdminPage() {
         ))
       )}
 
-      <BottomSheet visible={!!selected} onClose={() => setSelectedId(null)} title={selected ? `Report #${selected.id}` : undefined}>
+      <BottomSheet visible={!!selected} onClose={() => setSelectedId(null)} title={selected ? `Report #${selected.id.slice(0, 6).toUpperCase()}` : undefined}>
         {selected && (
           <div className="gap-4 pb-6">
             <Badge

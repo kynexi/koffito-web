@@ -74,7 +74,9 @@ export default function SurveyPage() {
     goBack();
   };
 
-  const handleNext = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleNext = async () => {
     // Every profile detail is required, so surface what is missing instead of moving on.
     if (step.kind === "about" && !isProfileComplete(details))
       return setSubmitted(true);
@@ -82,7 +84,15 @@ export default function SurveyPage() {
     setSubmitted(false);
     if (!isLast) return setStepIndex(stepIndex + 1);
 
-    updateProfile({ ...details, avatar, survey: answers, onboarded: true });
+    setSaving(true);
+    try {
+      await updateProfile({ ...details, avatar, survey: answers, onboarded: true });
+    } catch (error) {
+      toast.show({ title: "Could not save", message: (error as Error).message, variant: "error" });
+      return;
+    } finally {
+      setSaving(false);
+    }
 
     if (retake) {
       toast.show({
@@ -119,6 +129,7 @@ export default function SurveyPage() {
           fullWidth
           rightIcon={isLast ? undefined : "arrow-forward"}
           disabled={!canContinue}
+          loading={saving}
           onClick={handleNext}
         />
       }

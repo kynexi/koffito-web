@@ -32,10 +32,19 @@ export default function MyProfilePage() {
   const detailErrors = validateProfileFields(draft);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
 
-  const handleSave = () => {
-    updateProfile({ ...draft, firstName: draft.firstName.trim() });
-    toast.show({ title: "Profile saved", variant: "success" });
-    goBack();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({ ...draft, firstName: draft.firstName.trim() });
+      toast.show({ title: "Profile saved", variant: "success" });
+      goBack();
+    } catch (error) {
+      toast.show({ title: "Could not save", message: (error as Error).message, variant: "error" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Don't silently drop edits when leaving.
@@ -50,6 +59,7 @@ export default function MyProfilePage() {
           size="lg"
           fullWidth
           disabled={!dirty || !!nameError || !isProfileComplete(draft)}
+          loading={saving}
           onClick={handleSave}
         />
       }

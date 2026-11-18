@@ -8,6 +8,7 @@ import { Screen } from "@/components/layout";
 import { Chip, EmptyState, Header, useToast } from "@/components/ui";
 import { useEvents } from "@/context/events";
 import { isUpcoming } from "@/data/events";
+import { useAction } from "@/hooks/use-action";
 
 type Filter = "upcoming" | "past";
 
@@ -19,6 +20,7 @@ const filters: { key: Filter; label: string }[] = [
 export default function EventsPage() {
   const { events, confirmAttendance, reviewEvent } = useEvents();
   const toast = useToast();
+  const run = useAction();
   const [filter, setFilter] = useState<Filter>("upcoming");
   // Which past coffee talk is being reviewed, and in which sheet.
   const [reviewing, setReviewing] = useState<string | null>(null);
@@ -30,22 +32,26 @@ export default function EventsPage() {
     router.push({ pathname: "/report", params: id ? { eventId: id } : {} });
   };
 
-  const handleConfirm = (id: string, happened: boolean) => {
-    confirmAttendance(id, happened);
+  const handleConfirm = async (id: string, happened: boolean) => {
+    if (!(await run(() => confirmAttendance(id, happened), "Could not save"))) return;
     if (happened) setReviewing(id);
     else setMissed(id);
   };
 
-  const handleReview = (rating: number, comment: string) => {
-    if (reviewing) reviewEvent(reviewing, { rating, comment });
+  const handleReview = async (rating: number, comment: string) => {
+    const id = reviewing;
     setReviewing(null);
-    toast.show({ title: "Thanks for the review!", variant: "success" });
+    if (id && (await run(() => reviewEvent(id, { rating, comment }), "Could not save the review"))) {
+      toast.show({ title: "Thanks for the review!", variant: "success" });
+    }
   };
 
-  const handleMissed = (comment: string) => {
-    if (missed) reviewEvent(missed, { rating: 0, comment });
+  const handleMissed = async (comment: string) => {
+    const id = missed;
     setMissed(null);
-    toast.show({ title: "Thanks for letting us know", variant: "info" });
+    if (id && (await run(() => confirmAttendance(id, false, comment), "Could not save"))) {
+      toast.show({ title: "Thanks for letting us know", variant: "info" });
+    }
   };
 
   const mine = events.filter((event) => event.joined);

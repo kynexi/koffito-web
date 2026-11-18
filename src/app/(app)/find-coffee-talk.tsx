@@ -14,11 +14,13 @@ import {
 import { useEvents } from "@/context/events";
 import { isUpcoming } from "@/data/events";
 import { dayKey, formatDate, formatTime } from "@/lib/date";
+import { useAction } from "@/hooks/use-action";
 import { goBack } from "@/lib/navigation";
 
 export default function FindCoffeeTalkPage() {
   const { events, joinEvent, leaveEvent } = useEvents();
   const toast = useToast();
+  const run = useAction();
   const [selectedDay, setSelectedDay] = useState<string>();
 
   const available = events
@@ -32,8 +34,8 @@ export default function FindCoffeeTalkPage() {
     ? available.filter((event) => dayKey(event.date) === selectedDay)
     : available;
 
-  const handleJoin = (eventId: string) => {
-    joinEvent(eventId);
+  const handleJoin = async (eventId: string) => {
+    if (!(await run(() => joinEvent(eventId), "Could not join"))) return;
     toast.show({
       title: "Event joined",
       message:
@@ -42,8 +44,8 @@ export default function FindCoffeeTalkPage() {
     });
   };
 
-  const handleCancel = (eventId: string) => {
-    leaveEvent(eventId);
+  const handleCancel = async (eventId: string) => {
+    if (!(await run(() => leaveEvent(eventId), "Could not cancel"))) return;
     toast.show({
       title: "Event cancelled",
       message: "You can join another time whenever you are ready.",

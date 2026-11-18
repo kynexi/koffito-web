@@ -21,7 +21,7 @@ export function ReportCard({ report, onClick, animateIn }: ReportCardProps) {
   return (
     <Card onClick={onClick} animateIn={animateIn} className="gap-2">
       <div className="flex-row items-center justify-between gap-3">
-        <Text variant="heading">Report #{report.id}</Text>
+        <Text variant="heading">Report #{report.id.slice(0, 6).toUpperCase()}</Text>
         <Badge label={status.label} variant={status.variant} icon={status.icon} />
       </div>
       <Text variant="label">{report.reason}</Text>

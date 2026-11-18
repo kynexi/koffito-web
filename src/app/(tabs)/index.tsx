@@ -7,12 +7,11 @@ import { EmojiAvatar } from "@/components/profile/emoji-avatar";
 import { Button, Header, IconButton } from "@/components/ui";
 import { useEvents } from "@/context/events";
 import { useSession } from "@/context/session";
-import { visitedCafes } from "@/data/cafes";
 import { isUpcoming } from "@/data/events";
 
 export default function HomePage() {
   const { profile } = useSession();
-  const { events } = useEvents();
+  const { events, visitedCafes } = useEvents();
 
   // Fresh accounts finish the survey before seeing Home.
   if (!profile.onboarded) {
@@ -65,6 +64,7 @@ export default function HomePage() {
         onClick={() => router.push("/find-coffee-talk")}
       />
 
+      {visitedCafes.length > 0 && (
       <Section
         title="Cafés you've visited"
         actionLabel="Find more"
@@ -85,6 +85,7 @@ export default function HomePage() {
           ))}
         </div>
       </Section>
+      )}
     </Screen>
   );
 }

@@ -7,12 +7,15 @@ import { Stepper } from "@/components/events/stepper";
 import { Screen } from "@/components/layout";
 import { Button, Card, Header, Input, Text, Toggle, useToast } from "@/components/ui";
 import { useEvents } from "@/context/events";
+import { useAction } from "@/hooks/use-action";
+import { api } from "@/lib/api";
 import { goBack } from "@/lib/navigation";
 import type { Cafe } from "@/types/koffito";
 
 export default function CreateEventPage() {
   const { createEvent } = useEvents();
   const toast = useToast();
+  const run = useAction();
 
   const [cafe, setCafe] = useState<Cafe>();
   const [day, setDay] = useState<Date>();
@@ -37,16 +40,28 @@ export default function CreateEventPage() {
     setPhone(next.phone ?? "");
   };
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     setSubmitted(true);
     if (!cafe || !day || !time) return;
 
-    createEvent({
-      cafe: { ...cafe, website: website.trim() || undefined, phone: phone.trim() || undefined },
-      date: combineDateTime(day, time),
-      maxParticipants: participants,
-      locationHidden,
-    });
+    setSaving(true);
+    const ok = await run(async () => {
+      // Contact details belong to the café, so edits here update it for every coffee talk.
+      const contact = { website: website.trim() || null, phone: phone.trim() || null };
+      if (contact.website !== (cafe.website ?? null) || contact.phone !== (cafe.phone ?? null)) {
+        await api(`/admin/venues/${cafe.id}`, { method: "PATCH", body: contact });
+      }
+      await createEvent({
+        cafe,
+        date: combineDateTime(day, time),
+        maxParticipants: participants,
+        locationHidden,
+      });
+    }, "Could not create the coffee talk");
+    setSaving(false);
+    if (!ok) return;
     toast.show({ title: "Coffee talk created!", message: `See you at ${cafe.name} ☕`, variant: "success" });
     goBack();
   };
@@ -54,7 +69,7 @@ export default function CreateEventPage() {
   return (
     <Screen
       header={<Header title="New event" subtitle="Set up a coffee talk" onBack={goBack} />}
-      footer={<Button title="Save" size="lg" fullWidth leftIcon="checkmark" onClick={handleSave} />}>
+      footer={<Button title="Save" size="lg" fullWidth leftIcon="checkmark" loading={saving} onClick={handleSave} />}>
       <CafePicker value={cafe} onChange={handleCafeChange} error={showError("cafe")} />
 
       <FormField label="Date" error={showError("day")}>
