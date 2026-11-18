@@ -1,0 +1,92 @@
+import { router } from "@/lib/router";
+import { useRef, useState } from "react";
+
+import { AuthHero } from "@/components/auth/auth-hero";
+import { AuthSwitchLink } from "@/components/auth/auth-switch-link";
+import { Screen } from "@/components/layout";
+import { Button, Header, Input } from "@/components/ui";
+import { useToast } from "@/components/ui/toast";
+import { useSession } from "@/context/session";
+import { isValid, validateEmail, validateRequired } from "@/lib/validation";
+
+export default function LoginPage() {
+  const { signIn } = useSession();
+  const toast = useToast();
+  const passwordRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const errors = {
+    identifier: validateEmail(identifier),
+    password: validateRequired(password, "Enter your password"),
+  };
+
+  const handleLogin = async () => {
+    setSubmitted(true);
+    if (!isValid(errors)) return;
+
+    setLoading(true);
+    try {
+      const { error } = await signIn(identifier, password);
+      if (error) {
+        toast.show({
+          title: "Could not log in",
+          message: error.message,
+          variant: "error",
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Screen
+      header={<Header title="" onBack={router.canGoBack() ? router.back : undefined} />}
+      contentClassName="gap-8 pt-4">
+      <AuthHero emoji="👋" title="Welcome back" subtitle="Your next coffee chat is waiting for you." />
+
+      <div className="gap-4">
+        <Input
+          label="Email"
+          placeholder="you@example.com"
+          leftIcon="person-outline"
+          autoCapitalize="none"
+          autoCorrect="off"
+          type="email" inputMode="email"
+          autoComplete="username"
+          enterKeyHint="next"
+          value={identifier}
+          onChangeText={setIdentifier}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          error={submitted ? errors.identifier : undefined}
+        />
+        <Input
+          ref={passwordRef}
+          label="Password"
+          placeholder="Your password"
+          leftIcon="lock-closed-outline"
+          secureTextEntry
+          autoComplete="current-password"
+          enterKeyHint="done"
+          value={password}
+          onChangeText={setPassword}
+          onSubmitEditing={handleLogin}
+          error={submitted ? errors.password : undefined}
+        />
+      </div>
+
+      <div className="gap-2">
+        <Button title="Log in" size="lg" fullWidth loading={loading} onClick={handleLogin} />
+        <AuthSwitchLink
+          prompt="Don't have an account?"
+          actionLabel="Register"
+          onClick={() => router.replace("/register")}
+        />
+      </div>
+    </Screen>
+  );
+}
