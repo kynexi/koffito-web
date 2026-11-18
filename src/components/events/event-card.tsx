@@ -45,7 +45,7 @@ export function EventCard({ event, onClick, animateIn, onConfirm, onReview }: Ev
       className={cn("gap-3", ready && "border-2 border-primary bg-secondary")}>
       <div className="flex-row gap-3">
         <div>
-          <div key={locked ? "locked" : "open"} className="animate-in fade-in duration-300">
+          <div key={locked ? "locked" : "open"} className="animate-in fade-in overflow-hidden rounded-[20px] duration-300">
             <img className="object-cover"
               src={event.cafe.photo}
               alt={locked ? "Locked café" : `Photo of ${event.cafe.name}`}
