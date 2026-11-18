@@ -77,6 +77,8 @@
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-foreground));
     font-family: Nunito, system-ui, sans-serif;
+    /* React Native text has no inherited line-height: unset leading means "normal". */
+    line-height: normal;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
   }
