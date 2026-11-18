@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { BottomSheet, Icon, Text } from "@/components/ui";
-import { cafes } from "@/data/cafes";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { type ApiVenue, cafeFromApi } from "@/lib/mappers";
 import type { Cafe } from "@/types/koffito";
 
 export type CafePickerProps = {
@@ -14,6 +15,12 @@ export type CafePickerProps = {
 /** "Choose coffee place" field: shows the picked café and opens a sheet with the options. */
 export function CafePicker({ value, onChange, error }: CafePickerProps) {
   const [open, setOpen] = useState(false);
+  const [cafes, setCafes] = useState<Cafe[]>([]);
+
+  // Admin screen: every active café, from the server.
+  useEffect(() => {
+    api<ApiVenue[]>("/admin/venues").then((venues) => setCafes(venues.map(cafeFromApi)), () => setCafes([]));
+  }, []);
 
   return (
     <div className="gap-1.5">

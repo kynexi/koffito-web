@@ -15,7 +15,7 @@ export type CafeCarouselCardProps = {
 
 /** Swipeable card over the map: café picture, blurb and "Join meeting". */
 export function CafeCarouselCard({ event, width, onClick, onJoin }: CafeCarouselCardProps) {
-  const spotsLeft = event.maxParticipants - event.participants.length;
+  const spotsLeft = event.spotsLeft ?? event.maxParticipants - event.participants.length;
 
   return (
     <div style={{ width }}>

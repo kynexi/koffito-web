@@ -14,11 +14,13 @@ import {
 import { useEvents } from "@/context/events";
 import { isUpcoming } from "@/data/events";
 import { dayKey, formatDate, formatTime } from "@/lib/date";
+import { useAction } from "@/hooks/use-action";
 import { goBack } from "@/lib/navigation";
 
 export default function FindCoffeeTalkPage() {
   const { events, joinEvent, leaveEvent } = useEvents();
   const toast = useToast();
+  const run = useAction();
   const [selectedDay, setSelectedDay] = useState<string>();
 
   const available = events
@@ -32,8 +34,8 @@ export default function FindCoffeeTalkPage() {
     ? available.filter((event) => dayKey(event.date) === selectedDay)
     : available;
 
-  const handleJoin = (eventId: string) => {
-    joinEvent(eventId);
+  const handleJoin = async (eventId: string) => {
+    if (!(await run(() => joinEvent(eventId), "Could not join"))) return;
     toast.show({
       title: "Event joined",
       message:
@@ -42,8 +44,8 @@ export default function FindCoffeeTalkPage() {
     });
   };
 
-  const handleCancel = (eventId: string) => {
-    leaveEvent(eventId);
+  const handleCancel = async (eventId: string) => {
+    if (!(await run(() => leaveEvent(eventId), "Could not cancel"))) return;
     toast.show({
       title: "Event cancelled",
       message: "You can join another time whenever you are ready.",
@@ -122,6 +124,8 @@ export default function FindCoffeeTalkPage() {
             ) : (
               visibleEvents.map((event, index) => {
                 const joined = event.joined;
+                // Blind coffee talks keep the café secret; the others show it straight away.
+                const hidden = event.locationHidden ?? true;
 
                 return (
                   <Card
@@ -133,9 +137,10 @@ export default function FindCoffeeTalkPage() {
                       <div className="h-32 overflow-hidden rounded-2xl">
                         <img className="object-cover"
                           src={event.cafe.photo}
-                          alt="Blurred photo of the mystery café"
-                          style={{ width: "100%", height: "100%", filter: "blur(25px)" }}
+                          alt={hidden ? "Blurred photo of the mystery café" : `Photo of ${event.cafe.name}`}
+                          style={{ width: "100%", height: "100%", filter: hidden ? "blur(25px)" : undefined }}
                         />
+                        {hidden && (
                         <div className="absolute inset-0 items-center justify-center bg-black/20">
                           <div className="flex-row items-center gap-1.5 rounded-full bg-surface/90 px-3 py-1.5">
                             <Icon
@@ -146,6 +151,7 @@ export default function FindCoffeeTalkPage() {
                             <Text variant="caption">Revealed 24h before</Text>
                           </div>
                         </div>
+                        )}
                       </div>
 
                       <div className="flex-row items-center justify-between gap-3">
@@ -157,7 +163,7 @@ export default function FindCoffeeTalkPage() {
                         <div className="items-end gap-0.5">
                           <Text variant="label">{formatTime(event.date)}</Text>
                           <Text variant="caption" tone="muted">
-                            Location locked
+                            {hidden ? "Location locked" : event.cafe.name}
                           </Text>
                         </div>
                       </div>

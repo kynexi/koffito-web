@@ -6,6 +6,8 @@ import { OptionList } from "@/components/survey/option-list";
 import { Button, Card, Header, Input, Text, useToast } from "@/components/ui";
 import { useEvents } from "@/context/events";
 import { reportReasons } from "@/data/reports";
+import { useAction } from "@/hooks/use-action";
+import { api } from "@/lib/api";
 import { goBack } from "@/lib/navigation";
 
 const MIN_DETAILS = 10;
@@ -14,6 +16,7 @@ export default function ReportPage() {
   const { eventId } = useLocalSearchParams<{ eventId?: string }>();
   const { getEvent } = useEvents();
   const toast = useToast();
+  const run = useAction();
 
   const [reason, setReason] = useState<string[]>([]);
   const [details, setDetails] = useState("");
@@ -26,20 +29,27 @@ export default function ReportPage() {
       ? undefined
       : "A sentence or two helps us understand what happened";
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
     if (reason.length === 0 || detailsError) return;
 
     setSending(true);
-    // Stand-in for the real request.
-    setTimeout(() => {
-      toast.show({
-        title: "Report sent",
-        message: "Thank you - our team will take a look.",
-        variant: "success",
-      });
-      goBack();
-    }, 600);
+    const ok = await run(
+      () =>
+        api("/reports", {
+          method: "POST",
+          body: { reason: reason[0], details: details.trim(), event_id: event?.id ?? null },
+        }),
+      "Could not send the report",
+    );
+    setSending(false);
+    if (!ok) return;
+    toast.show({
+      title: "Report sent",
+      message: "Thank you - our team will take a look.",
+      variant: "success",
+    });
+    goBack();
   };
 
   return (

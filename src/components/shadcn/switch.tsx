@@ -3,20 +3,22 @@ import * as React from "react";
 
 import { cn } from "@/lib/cn";
 
-// shadcn/ui Switch in the warm palette: primary track when on, border-colored when off,
-// surface-colored thumb (same colors as the app's themed RN Switch).
+// shadcn/ui Switch, sized and colored like the app's themed switch on web:
+// 40×20 hit area, 40×14 rounded track (primary when on, border color when off)
+// and a 20×20 surface-colored thumb with a small shadow.
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer flex-row items-center rounded-full p-0.5 transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-border",
+      "group peer relative h-5 w-10 shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     {...props}
     ref={ref}>
-    <SwitchPrimitives.Thumb className="pointer-events-none block h-[27px] w-[27px] rounded-full bg-surface shadow-soft transition-transform duration-200 data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0" />
+    <span className="absolute inset-x-0 top-[3px] h-[14px] rounded-[10px] transition-colors duration-100 group-data-[state=checked]:bg-primary group-data-[state=unchecked]:bg-border" />
+    <SwitchPrimitives.Thumb className="pointer-events-none absolute left-0 top-0 block h-5 w-5 rounded-full bg-surface shadow-[0px_1px_3px_rgba(0,0,0,0.5)] transition-transform duration-100 data-[state=checked]:translate-x-5" />
   </SwitchPrimitives.Root>
 ));
 Switch.displayName = SwitchPrimitives.Root.displayName;

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { AuthHero } from "@/components/auth/auth-hero";
 import { AuthSwitchLink } from "@/components/auth/auth-switch-link";
 import { Screen } from "@/components/layout";
-import { Button, Header, Input } from "@/components/ui";
+import { Button, Header, Input, Text } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/context/session";
 import { isValid, validateEmail, validateRequired } from "@/lib/validation";
@@ -31,6 +31,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { error } = await signIn(identifier, password);
+      if (error?.code === "email_not_verified") {
+        router.push({ pathname: "/check-email", params: { email: identifier.trim() } });
+        return;
+      }
       if (error) {
         toast.show({
           title: "Could not log in",
@@ -77,6 +81,15 @@ export default function LoginPage() {
           onSubmitEditing={handleLogin}
           error={submitted ? errors.password : undefined}
         />
+        <button
+          type="button"
+          role="link"
+          onClick={() => router.push({ pathname: "/forgot-password", params: { email: identifier.trim() } })}
+          className="-mt-1 self-end px-1 py-1">
+          <Text variant="label" tone="primary">
+            Forgot password?
+          </Text>
+        </button>
       </div>
 
       <div className="gap-2">

@@ -33,7 +33,7 @@ export function BottomSheet({
       }}>
       <DrawerContent
         aria-describedby={description ? undefined : undefined}
-        className={cn("max-w-xl overflow-y-auto", className)}>
+        className={cn("max-w-xl overflow-y-auto no-scrollbar", className)}>
         {title || description ? (
           <div className="mb-4 gap-1">
             {title && (

@@ -51,7 +51,7 @@ export type Cafe = {
   website?: string;
   phone?: string;
   rating: number;
-  /** Relative busyness (0-100) for each slot in `popularTimeLabels`. */
+  /** Relative busyness (0-100) for each slot of the popular-times chart. */
   popularTimes: number[];
 };
 
@@ -64,6 +64,10 @@ export type CoffeeEvent = {
   status: MeetupStatusType;
   /** Whether the signed-in user is part of this coffee talk. */
   joined: boolean;
+  /** When the café gets revealed (from the server). */
+  revealAt?: Date;
+  /** Open spots, for coffee talks the user hasn't joined yet. */
+  spotsLeft?: number;
   /** Blind coffee talks keep the café secret until shortly before the meetup. */
   locationHidden?: boolean;
   /** Set once the user taps to open a café whose reveal time has passed. */

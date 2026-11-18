@@ -15,13 +15,15 @@ import {
   Header,
   IconButton,
   Modal,
+  Skeleton,
+  SkeletonText,
   Text,
   useToast,
 } from "@/components/ui";
 import { useEvents } from "@/context/events";
-import { getCafe } from "@/data/cafes";
 import { getEventState, getRevealTime, isUpcoming } from "@/data/events";
 import { formatDateTime } from "@/lib/date";
+import { useAction } from "@/hooks/use-action";
 import { goBack } from "@/lib/navigation";
 
 export default function EventDetailsPage() {
@@ -30,14 +32,24 @@ export default function EventDetailsPage() {
     id?: string;
     cafeId?: string;
   }>();
-  const { getEvent, joinEvent, cancelEvent, revealEvent } = useEvents();
+  const { getEvent, joinEvent, cancelEvent, revealEvent, visitedCafes, loading } = useEvents();
   const toast = useToast();
+  const run = useAction();
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
 
   const event = getEvent(id);
-  const cafe = event?.cafe ?? getCafe(cafeId);
+  const cafe = event?.cafe ?? visitedCafes.find((item) => item.id === cafeId);
+
+  if (!cafe && loading) {
+    return (
+      <Screen header={<Header title="Coffee talk" onBack={goBack} />}>
+        <Skeleton height={300} className="-mx-5 rounded-none" />
+        <SkeletonText lines={3} />
+      </Screen>
+    );
+  }
 
   if (!cafe) {
     return (
@@ -59,7 +71,7 @@ export default function EventDetailsPage() {
   const state = event ? getEventState(event) : undefined;
   const hidden = state?.kind === "mystery" || state?.kind === "awaiting-reveal";
   const spotsLeft = event
-    ? event.maxParticipants - event.participants.length
+    ? (event.spotsLeft ?? event.maxParticipants - event.participants.length)
     : 0;
 
   const openReport = () =>
@@ -68,10 +80,10 @@ export default function EventDetailsPage() {
       params: event ? { eventId: event.id } : {},
     });
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!event) return;
-    cancelEvent(event.id);
     setCancelOpen(false);
+    if (!(await run(() => cancelEvent(event.id), "Could not cancel"))) return;
     toast.show({
       title: "Coffee talk cancelled",
       message: "Maybe next time.",
@@ -80,9 +92,9 @@ export default function EventDetailsPage() {
     goBack();
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!event) return;
-    joinEvent(event.id);
+    if (!(await run(() => joinEvent(event.id), "Could not join"))) return;
     toast.show({
       title: "You're in!",
       message: `We saved you a seat at ${cafe.name}`,
@@ -136,7 +148,7 @@ export default function EventDetailsPage() {
               title="Reveal the café"
               size="lg"
               leftIcon="lock-open-outline"
-              onClick={() => revealEvent(event.id)}
+              onClick={() => void run(() => revealEvent(event.id), "Could not open the café")}
             />
           </div>
         )}
